@@ -257,6 +257,8 @@ public class XPathParser {
       });
       return builder.parse(inputSource);
     } catch (Exception e) {
+      // MyBatis全局配置文件中标签的顺序可以颠倒吗？ 比如把settings放在plugin之后
+      // 是会报错的 所以顺序必须严格一致
       throw new BuilderException("Error creating document instance.  Cause: " + e, e);
     }
   }

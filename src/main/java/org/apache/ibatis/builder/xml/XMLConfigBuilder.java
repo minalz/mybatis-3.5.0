@@ -47,6 +47,7 @@ import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.type.JdbcType;
 
 /**
+ * 专门用来解析全局配置文件
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
@@ -91,31 +92,50 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   public Configuration parse() {
+    // 首先判断全局配置文件是否已经解析过了
     if (parsed) {
+      // 在应用的生命周期里面，config配置文件只需要解析一次
+      // 生成的Configuration对象也会存在应用的整个生命周期中
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
     parsed = true;
+    // 解析XML MyBatis对dom和SAX做了封装，方便使用
     parseConfiguration(parser.evalNode("/configuration"));
     return configuration;
   }
 
   private void parseConfiguration(XNode root) {
+    // 对应着config文件里面的所有一级标签
+    // MyBatis全局配置文件中标签的顺序可以颠倒吗？ 比如把settings放在plugin之后
+    // 是会报错的 所以顺序必须严格一致
+    // 根据下面的解析顺序
     try {
       //issue #117 read properties first
+      // 解析<properties>
       propertiesElement(root.evalNode("properties"));
+      // 解析<settings> 先解析 后赋值 为什么不放在方法里买呢呢？-> 因为下面用到了
       Properties settings = settingsAsProperties(root.evalNode("settings"));
+      // vfs Virtual File System 如果要读取本地文件或者FTP远程文件 就可以用到自定义的VFS类
       loadCustomVfs(settings);
+      // 获取日志的实现类 比如log4j logrj2 slf4j
       loadCustomLogImpl(settings);
       typeAliasesElement(root.evalNode("typeAliases"));
       pluginElement(root.evalNode("plugins"));
+      // 创建返回的对象
       objectFactoryElement(root.evalNode("objectFactory"));
+      // 对对象做特殊的处理 比如可以下划线转驼峰命名
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
+      // 反射工具箱
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
+      // 处理<settings>中的所有子标签
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
       environmentsElement(root.evalNode("environments"));
+      // 用来支持不同厂商的数据库
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
+      // 和TypeAlias一样 两种配置 一个类 一个package 存在TypeHandlerRegistry对象里面 Map结构：Map<Type, Map<JdbcType, TypeHandler<?>>>
       typeHandlerElement(root.evalNode("typeHandlers"));
+      // 语句的注册和接口的注册
       mapperElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
@@ -159,6 +179,9 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void typeAliasesElement(XNode parent) {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        // 类的别名有两种定义方式 一种是直接定义一个类的别名
+        // 另一种是制定一个package 那么这个包下面所有的类的名字就会成为这个类全路径的别名
+        // 类的别名和类的关系 放在typeAliasRegistry对象里面 结构是：Map<String, Class<?>>
         if ("package".equals(child.getName())) {
           String typeAliasPackage = child.getStringAttribute("name");
           configuration.getTypeAliasRegistry().registerAliases(typeAliasPackage);
@@ -183,10 +206,17 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void pluginElement(XNode parent) throws Exception {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        /**
+         * 因为所有的插件都要实现Interceptor接口，所以这一步做的事情就是把插件解析成Interceptor类
+         * 设置属性，然后添加到Configuration的InterceptorChain属性里面，是一个List
+         */
         String interceptor = child.getStringAttribute("interceptor");
         Properties properties = child.getChildrenAsProperties();
         Interceptor interceptorInstance = (Interceptor) resolveClass(interceptor).newInstance();
         interceptorInstance.setProperties(properties);
+        // 责任链模式
+        // 插件的工作流程分成散步 第一步解析 第二步包装(代理) 第三步运行时拦截
+        // 这里完成了第一步的工作
         configuration.addInterceptor(interceptorInstance);
       }
     }
@@ -220,6 +250,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void propertiesElement(XNode context) throws Exception {
     if (context != null) {
+      // hashtable结构 kv存储
       Properties defaults = context.getChildrenAsProperties();
       String resource = context.getStringAttribute("resource");
       String url = context.getStringAttribute("url");
@@ -227,8 +258,10 @@ public class XMLConfigBuilder extends BaseBuilder {
         throw new BuilderException("The properties element cannot specify both a URL and a resource based property file reference.  Please specify one or the other.");
       }
       if (resource != null) {
+        // 一种是放在resource目录下的 是相对路径
         defaults.putAll(Resources.getResourceAsProperties(resource));
       } else if (url != null) {
+        // 一种是写的绝对路径的url
         defaults.putAll(Resources.getUrlAsProperties(url));
       }
       Properties vars = configuration.getVariables();
@@ -357,8 +390,16 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   private void mapperElement(XNode parent) throws Exception {
+    /**
+     * resource: 相对路径
+     * url: 绝对路径
+     * package: 包
+     * class: 单个接口
+     */
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        // 不同的定义方式的扫描 最终都是调用addMapper()方法(添加到MapperRegistry)
+        // 和getMapper()对应
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
           configuration.addMappers(mapperPackage);
@@ -367,16 +408,19 @@ public class XMLConfigBuilder extends BaseBuilder {
           String url = child.getStringAttribute("url");
           String mapperClass = child.getStringAttribute("class");
           if (resource != null && url == null && mapperClass == null) {
+            // resource 相对路径
             ErrorContext.instance().resource(resource);
             InputStream inputStream = Resources.getResourceAsStream(resource);
             XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
             mapperParser.parse();
           } else if (resource == null && url != null && mapperClass == null) {
+            // url 绝对路径
             ErrorContext.instance().resource(url);
             InputStream inputStream = Resources.getUrlAsStream(url);
             XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url, configuration.getSqlFragments());
             mapperParser.parse();
           } else if (resource == null && url == null && mapperClass != null) {
+            // class 单个接口
             Class<?> mapperInterface = Resources.classForName(mapperClass);
             configuration.addMapper(mapperInterface);
           } else {

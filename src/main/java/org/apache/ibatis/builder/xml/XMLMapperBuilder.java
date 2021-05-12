@@ -49,6 +49,7 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
+ * 解析Mapper映射器
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
