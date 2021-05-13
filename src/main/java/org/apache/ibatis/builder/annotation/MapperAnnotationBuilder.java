@@ -1,5 +1,5 @@
 /**
- *    Copyright ${license.git.copyrightYears} the original author or authors.
+ *    Copyright 2009-2021 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -129,13 +129,17 @@ public class MapperAnnotationBuilder {
       loadXmlResource();
       configuration.addLoadedResource(resource);
       assistant.setCurrentNamespace(type.getName());
+      // 对@CacheNamespace注解的处理
       parseCache();
+      // 对@CacheNamespaceRef注解的处理
       parseCacheRef();
       Method[] methods = type.getMethods();
       for (Method method : methods) {
         try {
           // issue #237
           if (!method.isBridge()) {
+            // 对各种注解的解析 比如@Options @SelectKey @ResultMap等
+            // 最后同样会创建MappedStatement对象 添加到Map<String, MappedStatement> mappedStatements中 也就是说在XML中配置 和使用注解配置 最后起到一样的效果
             parseStatement(method);
           }
         } catch (IncompleteElementException e) {
@@ -361,6 +365,7 @@ public class MapperAnnotationBuilder {
         resultMapId = parseResultMap(method);
       }
 
+      // 最后同样会创建MappedStatement对象 添加到Map<String, MappedStatement> mappedStatements中 也就是说在XML中配置 和使用注解配置 最后起到一样的效果
       assistant.addMappedStatement(
           mappedStatementId,
           sqlSource,

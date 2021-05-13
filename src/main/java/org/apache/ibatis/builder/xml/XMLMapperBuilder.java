@@ -1,5 +1,5 @@
 /**
- *    Copyright ${license.git.copyrightYears} the original author or authors.
+ *    Copyright 2009-2021 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -92,8 +92,10 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   public void parse() {
     if (!configuration.isResourceLoaded(resource)) {
+      // 解析所有的子标签 最终获得MappedStatement对象
       configurationElement(parser.evalNode("/mapper"));
       configuration.addLoadedResource(resource);
+      // 把namespace(接口类型)和工厂类MapperProxyFactory绑定起来
       bindMapperForNamespace();
     }
 
@@ -113,11 +115,17 @@ public class XMLMapperBuilder extends BaseBuilder {
         throw new BuilderException("Mapper's namespace cannot be empty");
       }
       builderAssistant.setCurrentNamespace(namespace);
+      // 添加花村对象 这个标签可以引用其他mapper.xml中 可以共享二级缓存配置
       cacheRefElement(context.evalNode("cache-ref"));
+      // 解析cache属性 添加缓存对象
       cacheElement(context.evalNode("cache"));
+      // 创建ParameterMapping对象
       parameterMapElement(context.evalNodes("/mapper/parameterMap"));
+      // 创建List<ResultMapping>
       resultMapElements(context.evalNodes("/mapper/resultMap"));
+      // 解析可以复用的SQL
       sqlElement(context.evalNodes("/mapper/sql"));
+      // 解析增删改查标签 得到MappedStatement
       buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing Mapper XML. The XML location is '" + resource + "'. Cause: " + e, e);
@@ -439,6 +447,8 @@ public class XMLMapperBuilder extends BaseBuilder {
           // to prevent loading again this resource from the mapper interface
           // look at MapperAnnotationBuilder#loadXmlResource
           configuration.addLoadedResource("namespace:" + namespace);
+          // 这里是为了把接口类型注册到MapperRegistry中 实际上是为接口创建一个对象的MapperProxyFactory
+          // 用于为这个type提供工厂类 创建MapperProxy
           configuration.addMapper(boundType);
         }
       }

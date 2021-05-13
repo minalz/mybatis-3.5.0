@@ -1,5 +1,5 @@
 /**
- *    Copyright ${license.git.copyrightYears} the original author or authors.
+ *    Copyright 2009-2021 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -64,10 +64,14 @@ public class MapperRegistry {
       }
       boolean loadCompleted = false;
       try {
+        // 这里是为了把接口类型注册到MapperRegistry中 实际上是为接口创建一个对象的MapperProxyFactory
+        // 用于为这个type提供工厂类 创建MapperProxy
         knownMappers.put(type, new MapperProxyFactory<>(type));
+        // 注册了接口之后 开始解析接口类和所有方法上的注解
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the
         // mapper parser. If the type is already known, it won't try.
+        // 上面的翻译：重要的是，必须在运行解析器之前添加类型，否则映射器解析器可能会自动尝试进行绑定。如果类型是已知的，则不会尝试。
         MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
         parser.parse();
         loadCompleted = true;
