@@ -34,6 +34,7 @@ import java.util.Set;
 public class MapperRegistry {
 
   private final Configuration config;
+  // 为什么要在MapperRegistry中保存一个工厂类 是用来创建代理类的
   private final Map<Class<?>, MapperProxyFactory<?>> knownMappers = new HashMap<>();
 
   public MapperRegistry(Configuration config) {
@@ -42,11 +43,14 @@ public class MapperRegistry {
 
   @SuppressWarnings("unchecked")
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+    // 在解析mapper标签和Mapper.xml的时候 已经把接口类型和类型对应的MapperProxyFactory放到了一个Map中
+    // 获取Mapper代理对象 实际上是从Map中获取对应的工厂类后 调用newInstance创建对象的
     final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
     if (mapperProxyFactory == null) {
       throw new BindingException("Type " + type + " is not known to the MapperRegistry.");
     }
     try {
+      // 创建实例对象
       return mapperProxyFactory.newInstance(sqlSession);
     } catch (Exception e) {
       throw new BindingException("Error getting mapper instance. Cause: " + e, e);

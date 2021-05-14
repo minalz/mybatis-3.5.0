@@ -48,7 +48,11 @@ public class MapperProxyFactory<T> {
   }
 
   public T newInstance(SqlSession sqlSession) {
+    // 先创建MapperProxy 实现类InvocationHandler接口 主要属性有三个 sqlSession mapperInterface methodCache
     final MapperProxy<T> mapperProxy = new MapperProxy<>(sqlSession, mapperInterface, methodCache);
+    // JDK的动态代理 返回代理对象 类型是$Proxy数字
+    // MyBatis中 动态代理为什么不需要实现类?
+    // 这是因为只要根据Statement ID 就可以找到目的方法(Mapper.xml) 方便调用
     return newInstance(mapperProxy);
   }
 

@@ -570,9 +570,12 @@ public class Configuration {
   }
 
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+    // 创建Executor 三种类型 SIMPLE BATCH REUSE 默认是SIMPLE(settingsElemnet()读取默认值)
     executorType = executorType == null ? defaultExecutorType : executorType;
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
+    // 为什么要让抽象类BaseExecutor实现Executor解耦 然后让具体实现类继承抽象类? --> 这是模板方法的体现
+    // 模板方法定义一个算法的骨架，并允许子类为一个或者多个步骤提供实现 模板方法使得子类可以再不改变算法结构的基础下 重新定义算法的某些步骤
     if (ExecutorType.BATCH == executorType) {
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
@@ -580,9 +583,11 @@ public class Configuration {
     } else {
       executor = new SimpleExecutor(this, transaction);
     }
+    // 缓存装饰 cacheEnabled=true 会用装饰器模式对executor进行装饰
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }
+    // 插件代理
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }

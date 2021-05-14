@@ -44,6 +44,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
   @Override
   public SqlSession openSession() {
+    // 创建SqlSession
     return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
   }
 
@@ -92,8 +93,14 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     try {
       final Environment environment = configuration.getEnvironment();
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      // <environments>标签 中定义的transactionFactory
+      // 事务工厂类型可以配置成JDBC(使用Connection对象的commit rollback close)或者MANAGED(交给容器 比如JBOSS Weblogic)
+      // 如果是Spring + MyBatis 则没有必要配置 因为会直接在applicationContext.xml里面配置数据源和事务管理器 覆盖MyBatis的配置
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+      // 创建Executor 三种类型 SIMPLE BATCH REUSE 默认是SIMPLE(settingsElemnet()读取默认值)
+      // 三个步骤：1.创建执行器 2.缓存装饰 3.插件代理
       final Executor executor = configuration.newExecutor(tx, execType);
+      // 返回SqlSession实现类 最终返回DefaultSqlSession 属性包括Configuration Executor对象
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()
