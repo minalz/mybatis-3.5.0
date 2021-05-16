@@ -45,7 +45,10 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    // 由于所有的Mapper都是JDK动态代理对象，所以任意的方法都是执行触发管理类MapperProxy的invoke()方法
     try {
+      // 首先判断是否需要去执行SQL，还是直接执行方法
+      // Object本身的方法不需要去执行SQL 比如toString()、hashCode()、equals()、getClass()
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, args);
       } else if (isDefaultMethod(method)) {
@@ -54,11 +57,14 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);
     }
+    // 获取缓存 这里加入缓存是为了提升MapperMethod的获取速度
+    // 保存了方法签名和接口方法的关系
     final MapperMethod mapperMethod = cachedMapperMethod(method);
     return mapperMethod.execute(sqlSession, args);
   }
 
   private MapperMethod cachedMapperMethod(Method method) {
+    // 根据key获取值 如果值是null 则把Object的值赋给key
     return methodCache.computeIfAbsent(method, k -> new MapperMethod(mapperInterface, method, sqlSession.getConfiguration()));
   }
 

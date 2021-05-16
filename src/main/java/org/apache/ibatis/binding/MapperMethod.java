@@ -47,12 +47,21 @@ public class MapperMethod {
   private final MethodSignature method;
 
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
+    // 封装了statement id 和SQL类型 例如：cn.minalz.mapper.BlogMapper.selectBlogById
     this.command = new SqlCommand(config, mapperInterface, method);
+    // 主要封装返回值的类型
+    // 这两个属性都是MapperMethod的内部类
+    // 另外MapperMethod中定义了多种execute()方法
     this.method = new MethodSignature(config, mapperInterface, method);
   }
 
   public Object execute(SqlSession sqlSession, Object[] args) {
     Object result;
+    /**
+     *  在这一步 根据不通的type(INSERT、UPDATE、DELETE、SELECT)和返回类型：
+     *  1.调用convertArgsToSqlCommandParam()将方法参数转换为SQL的参数
+     *  2.调用sqlSession的insert()、update()、delete()、selectOne()等方法 以查询为例 会走到selectOne()方法
+     */
     switch (command.getType()) {
       case INSERT: {
     	Object param = method.convertArgsToSqlCommandParam(args);
@@ -81,6 +90,8 @@ public class MapperMethod {
           result = executeForCursor(sqlSession, args);
         } else {
           Object param = method.convertArgsToSqlCommandParam(args);
+          // 这里来到了对外的接口的默认实现类DefaultSqlSession
+          // selectOne最终也是调用了selectList()
           result = sqlSession.selectOne(command.getName(), param);
           if (method.returnsOptional() &&
               (result == null || !method.getReturnType().equals(result.getClass()))) {
