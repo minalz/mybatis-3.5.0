@@ -196,8 +196,12 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    // 6个要素
+    // 方法相同、翻页偏移相同、SQL相同、参数值相同、数据源环境相同 才会被认为是同一个查询
+    // 格式: cn.minalz.mapper.BlogMapper.selectBlogById:0:214721324:select * from blog where bid = ?:1:development
     CacheKey cacheKey = new CacheKey();
     cacheKey.update(ms.getId());
+    // 翻页的参数 也可以叫做翻页的偏移量
     cacheKey.update(rowBounds.getOffset());
     cacheKey.update(rowBounds.getLimit());
     cacheKey.update(boundSql.getSql());

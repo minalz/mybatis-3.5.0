@@ -30,6 +30,8 @@ public class CacheKey implements Cloneable, Serializable {
 
   public static final CacheKey NULL_CACHE_KEY = new NullCacheKey();
 
+  // 对hashcode进行了重写
+  // 判断cacheKey是否相同 用hashcode判断笔记快速 如果用6个要素 进行比较 效率低
   private static final int DEFAULT_MULTIPLYER = 37;
   private static final int DEFAULT_HASHCODE = 17;
 
