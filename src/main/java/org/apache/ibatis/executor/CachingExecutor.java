@@ -101,9 +101,13 @@ public class CachingExecutor implements Executor {
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, boundSql);
         @SuppressWarnings("unchecked")
+        // 从map中拿出TransactionalCache对象，这个对象也是对PerpetualCache经过层层装饰的缓存对象
+        // 然后再getObject()，这个是一个会递归调用的方法，直到到达PerpetualCache，拿到value
         List<E> list = (List<E>) tcm.getObject(cache, key);
         if (list == null) {
           list = delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
+          // 从Map中拿出TransactionCache对象，把value添加到待提交的Map，此时缓存还没有真正的写入
+          // 只有事务提交的时候缓存才真正写入(close或者commit)
           tcm.putObject(cache, key, list); // issue #578 and #116
         }
         return list;
@@ -168,6 +172,17 @@ public class CachingExecutor implements Executor {
     Cache cache = ms.getCache();
     // 是否强制去刷新缓存 insert update delete默认强制刷新flushCache=true
     if (cache != null && ms.isFlushCacheRequired()) {
+      /**
+       * 二级缓存为什么要用TCM来管理?
+       * 在一个事务中：
+       * 1.首先插入一条数据，但是没有提交，此时二级缓存会被清空
+       * 2.在这个事务中查询数据，写入二级缓存
+       * 3.提交事务，出现异常，数据回滚
+       * 此时出现了数据库没有这条数据，但是二级缓存有这条数据的情况，所以MyBatis的二级缓存需要跟事务关联起来
+       * 那为什么一级缓存不这么做？
+       * 因为一个session就是一个事务，事务回滚，会话就结束了，缓存也清空了，不存在督导一级缓存中脏数据的情况。
+       * 二级缓存是跨session的，也就是跨事务的，才有可能出现对同一个方法的不同事务访问
+       */
       tcm.clear(cache);
     }
   }

@@ -65,7 +65,11 @@ public abstract class BaseStatementHandler implements StatementHandler {
     }
 
     this.boundSql = boundSql;
-
+    /**
+     * StatementHandler、ParameterHandler、ResultSetHandler
+     * 三个对象都是可以被插件拦截的四大对象之一，所以再创建之后都要用拦截器进行包装方法
+     * 还有一个对象是Executor
+     */
     this.parameterHandler = configuration.newParameterHandler(mappedStatement, parameterObject, boundSql);
     this.resultSetHandler = configuration.newResultSetHandler(executor, mappedStatement, rowBounds, parameterHandler, resultHandler, boundSql);
   }

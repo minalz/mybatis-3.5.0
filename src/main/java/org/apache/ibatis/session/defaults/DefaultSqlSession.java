@@ -144,7 +144,7 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
     try {
-      // 根据command name(Statement ID)从configuration中拿到MappedStatement ms理由面xml中增删改查标签配置的所有属性
+      // 根据command name(Statement ID)从configuration中拿到MappedStatement ms里面有xml中增删改查标签配置的所有属性
       // 包括id statementType sqlSource useCache 入参 出参等等
       MappedStatement ms = configuration.getMappedStatement(statement);
       // Executor是第二步openSession的时候创建的 创建了执行器基本类型之后 一次执行了二级缓存装饰和插件拦截

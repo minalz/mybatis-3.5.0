@@ -84,6 +84,8 @@ public class TransactionalCache implements Cache {
 
   @Override
   public void putObject(Object key, Object object) {
+    // 从Map中拿出TransactionCache对象，把value添加到待提交的Map，此时缓存还没有真正的写入
+    // 只有事务提交的时候缓存才真正写入(close或者commit)
     entriesToAddOnCommit.put(key, object);
   }
 

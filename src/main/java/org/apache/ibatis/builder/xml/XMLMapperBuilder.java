@@ -115,7 +115,7 @@ public class XMLMapperBuilder extends BaseBuilder {
         throw new BuilderException("Mapper's namespace cannot be empty");
       }
       builderAssistant.setCurrentNamespace(namespace);
-      // 添加花村对象 这个标签可以引用其他mapper.xml中 可以共享二级缓存配置
+      // 添加缓存对象 这个标签可以引用其他mapper.xml中 可以共享二级缓存配置
       cacheRefElement(context.evalNode("cache-ref"));
       // 解析cache属性 添加缓存对象
       cacheElement(context.evalNode("cache"));

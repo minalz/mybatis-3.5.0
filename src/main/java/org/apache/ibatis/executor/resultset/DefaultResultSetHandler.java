@@ -179,6 +179,12 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   //
   @Override
   public List<Object> handleResultSets(Statement stmt) throws SQLException {
+    /**
+     * 怎么把ResultSet转换成List<Object>?
+     * ResultSetHandler只有一个实现类：DefaultResultSetHandler。也就是执行DefaultResultSetHandler的handleResultSets()方法
+     * 首先我们会先拿到第一个结果集，如果没有配置一个查询返回多个结果集的情况，一般只有一个结果集。如果下面的这个while循环我们也不用，就是执行一次
+     * 然后会调用handleResultSet()方法
+     */
     ErrorContext.instance().activity("handling results").object(mappedStatement.getId());
 
     final List<Object> multipleResults = new ArrayList<>();
