@@ -120,6 +120,9 @@ public class XMLConfigBuilder extends BaseBuilder {
       // 获取日志的实现类 比如log4j logrj2 slf4j
       loadCustomLogImpl(settings);
       typeAliasesElement(root.evalNode("typeAliases"));
+      // 在这里 插件解析注册
+      // Mybatis启动时扫描<plugins>标签，注册到Configuration对象的InterceptorChain中
+      // property里面的参数，会调用setProperties()方法处理
       pluginElement(root.evalNode("plugins"));
       // 创建返回的对象
       objectFactoryElement(root.evalNode("objectFactory"));
@@ -215,7 +218,7 @@ public class XMLConfigBuilder extends BaseBuilder {
         Interceptor interceptorInstance = (Interceptor) resolveClass(interceptor).newInstance();
         interceptorInstance.setProperties(properties);
         // 责任链模式
-        // 插件的工作流程分成散步 第一步解析 第二步包装(代理) 第三步运行时拦截
+        // 插件的工作流程分成三步 第一步解析 第二步包装(代理) 第三步运行时拦截
         // 这里完成了第一步的工作
         configuration.addInterceptor(interceptorInstance);
       }
