@@ -58,7 +58,7 @@ public class MapperMethod {
   public Object execute(SqlSession sqlSession, Object[] args) {
     Object result;
     /**
-     *  在这一步 根据不通的type(INSERT、UPDATE、DELETE、SELECT)和返回类型：
+     *  在这一步 根据不同的type(INSERT、UPDATE、DELETE、SELECT)和返回类型：
      *  1.调用convertArgsToSqlCommandParam()将方法参数转换为SQL的参数
      *  2.调用sqlSession的insert()、update()、delete()、selectOne()等方法 以查询为例 会走到selectOne()方法
      */
