@@ -28,6 +28,7 @@ public class InterceptorChain {
   private final List<Interceptor> interceptors = new ArrayList<>();
 
   public Object pluginAll(Object target) {
+    // 因为这里是for循环代理，所以某个核心对象有多个插件，会返回被代理多次的代理代理对象
     for (Interceptor interceptor : interceptors) {
       target = interceptor.plugin(target);
     }

@@ -45,6 +45,7 @@ public class Invocation {
     return args;
   }
 
+  // 因为对被拦截对象、被拦截方法、被拦截参数做了一个封装 调用这个方法 可以继续执行原来的方法
   public Object proceed() throws InvocationTargetException, IllegalAccessException {
     return method.invoke(target, args);
   }

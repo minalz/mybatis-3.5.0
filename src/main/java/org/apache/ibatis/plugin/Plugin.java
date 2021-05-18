@@ -34,6 +34,7 @@ public class Plugin implements InvocationHandler {
   private final Interceptor interceptor;
   private final Map<Class<?>, Set<Method>> signatureMap;
 
+  // 持有了被代理对象和Interceptor的实例
   private Plugin(Object target, Interceptor interceptor, Map<Class<?>, Set<Method>> signatureMap) {
     this.target = target;
     this.interceptor = interceptor;
@@ -48,6 +49,7 @@ public class Plugin implements InvocationHandler {
       return Proxy.newProxyInstance(
           type.getClassLoader(),
           interfaces,
+          // 创建了一个Plugin读喜庆，Plugin是被代理对象、Interceptor的一个封装对象
           new Plugin(target, interceptor, signatureMap));
     }
     return target;
@@ -57,7 +59,11 @@ public class Plugin implements InvocationHandler {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
       Set<Method> methods = signatureMap.get(method.getDeclaringClass());
+      // 如果被拦截的方法不为空，进入Plugin的invoke()方法，调用Interceptor的intercept()方法
       if (methods != null && methods.contains(method)) {
+        // 走到这里 也就走到了我们自己实现的拦截逻辑(例如PageInterceptor的intercept()方法)
+        // 需要注意一下：参数是new出来的Invocation对象，它是对被拦截对象、被拦截方法、被拦截参数的一个封装。为什么这么传？
+        // -> 简化了参数的传递，而且直接提供了一个proceed()方法，可以继续执行原方法
         return interceptor.intercept(new Invocation(target, method, args));
       }
       return method.invoke(target, args);
