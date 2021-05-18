@@ -219,7 +219,7 @@ public class XMLConfigBuilder extends BaseBuilder {
         interceptorInstance.setProperties(properties);
         // 责任链模式
         // 插件的工作流程分成三步 第一步解析 第二步包装(代理) 第三步运行时拦截
-        // 这里完成了第一步的工作
+        // 这里完成了第一步的工作 添加到拦截器链中 IntegercepterChain是一个List
         configuration.addInterceptor(interceptorInstance);
       }
     }

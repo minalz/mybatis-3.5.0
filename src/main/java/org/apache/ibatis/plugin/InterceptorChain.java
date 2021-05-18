@@ -24,6 +24,7 @@ import java.util.List;
  */
 public class InterceptorChain {
 
+  // 拦截器链 List
   private final List<Interceptor> interceptors = new ArrayList<>();
 
   public Object pluginAll(Object target) {
